@@ -1,0 +1,27 @@
+name: usb-reset
+version: '0.1'
+summary: Reset a USB device using vendor and product ID.
+description: This tool allows you to perform a bus reset on a USB device
+    connected to your system. If the device has got confused, this may sort it
+    out.
+confinement: strict
+
+apps:
+  usb-reset:
+    command: usr/local/bin/usb-reset
+    plugs: [raw-usb]
+
+parts:
+  usb-reset:
+    plugin: make
+    source: https://github.com/ralight/usb-reset
+    source-type: git
+
+    build-packages:
+      - libusb-1.0-0-dev
+
+    stage-packages:
+      - libusb-1.0-0
+
+    prime:
+    - usr/local/bin/usb-reset
