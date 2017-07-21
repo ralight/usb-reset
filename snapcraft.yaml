@@ -25,3 +25,4 @@ parts:
 
     prime:
     - usr/local/bin/usb-reset
+    - lib/*-linux-gnu/libusb-1.0.so*
