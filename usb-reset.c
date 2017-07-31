@@ -23,6 +23,7 @@ SOFTWARE.
 */
 #include <libusb.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 void print_usage(void)
@@ -135,6 +136,12 @@ int main(int argc, char *argv[])
 	handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if(!handle){
 		printf("Unable to open device %04x:%04x, are you root?\n", vid, pid);
+
+		const char *snap = getenv("SNAP_NAME");
+		if(snap){
+			printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
+		}
+
 		libusb_exit(NULL);
 		return 1;
 	}
