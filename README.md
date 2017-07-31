@@ -11,5 +11,9 @@ code was described that did the same thing but based on usb bus and device
 numbers, which sounded like a pain. Getting the snap working took longer than
 writing the code.
 
+Usage:
+
+    sudo usb-reset 0328:6f51
+
 https://github.com/ralight/usb-reset
 
