@@ -29,7 +29,10 @@ SOFTWARE.
 void print_usage(void)
 {
 	printf("usb-reset %s: perform a bus reset on a USB device.\n\n", VERSION);
-	printf("Usage: usb-reset vendor_id:product_id\n");
+	printf("Reset a single device:\n");
+	printf("       usb-reset vendor_id:product_id\n\n");
+	printf("Reset all devices apart from hubs:\n");
+	printf("       usb-reset -a\n\n");
 	printf("Example: usb-reset 0245:7276\n\n");
 	printf("See https://github.com/ralight/usb-reset\n");
 }
@@ -113,25 +116,10 @@ int str_to_vid_pid(char *vid_pid, int *vid, int *pid)
 }
 
 
-int main(int argc, char *argv[])
+int reset_by_vid_pid(int vid, int pid)
 {
-	int vid, pid;
-	struct libusb_device_handle *handle;
 	int rc = 0;
-
-	if(argc != 2){
-		print_usage();
-		return 1;
-	}
-
-	if(str_to_vid_pid(argv[1], &vid, &pid)){
-		return 1;
-	}
-
-	if(libusb_init(NULL)){
-		printf("Unable to initialise libusb, exiting.\n");
-		return 1;
-	}
+	struct libusb_device_handle *handle;
 
 	handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if(!handle){
@@ -142,7 +130,6 @@ int main(int argc, char *argv[])
 			printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
 		}
 
-		libusb_exit(NULL);
 		return 1;
 	}
 
@@ -150,8 +137,85 @@ int main(int argc, char *argv[])
 		printf("Reset failed, you may need to replug your device.\n");
 		rc = 1;
 	}
-	
+
 	libusb_close(handle);
+
+	return rc;
+}
+
+
+int reset_all(void)
+{
+	struct libusb_device_handle *handle;
+	libusb_device **devices;
+	ssize_t device_count;
+	int error;
+	int rc = 0;
+	struct libusb_device_descriptor desc;
+
+	device_count = libusb_get_device_list(NULL, &devices);
+
+	if(device_count < 0){
+		return 1;
+	}
+
+	for(int i=0; i<device_count; i++){
+		libusb_get_device_descriptor(devices[i], &desc);
+
+		if(desc.bDeviceClass == LIBUSB_CLASS_HUB){
+			continue;
+		}
+
+		error = libusb_open(devices[i], &handle);
+		if(error){
+			printf("Unable to open device %04x:%04x, are you root?\n", desc.idVendor, desc.idProduct);
+
+			const char *snap = getenv("SNAP_NAME");
+			if(snap){
+				printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
+			}
+
+			return 1;
+		}
+
+		if(libusb_reset_device(handle)){
+			printf("Reset failed, you may need to replug the device %04x:%04x.\n", desc.idVendor, desc.idProduct);
+			rc = 1;
+		}
+		libusb_close(handle);
+	}
+
+	libusb_free_device_list(devices, 1);
+
+	return rc;
+}
+
+
+int main(int argc, char *argv[])
+{
+	int vid, pid;
+	int rc;
+
+	if(argc != 2){
+		print_usage();
+		return 1;
+	}
+
+	if(libusb_init(NULL)){
+		printf("Unable to initialise libusb, exiting.\n");
+		return 1;
+	}
+
+	if(!strcmp(argv[1], "-a")){
+		rc = reset_all();
+	}else{
+		if(str_to_vid_pid(argv[1], &vid, &pid)){
+			return 1;
+		}
+
+		rc = reset_by_vid_pid(vid, pid);
+	}
+
 	libusb_exit(NULL);
 
 	return rc;

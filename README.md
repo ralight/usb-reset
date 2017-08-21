@@ -15,5 +15,14 @@ Usage:
 
     sudo usb-reset 0328:6f51
 
+It can also be used to reset all USB devices in one go, for even easier
+operation:
+
+	sudo usb-reset -a
+
+This option does not reset USB hubs (to avoid interfering with internal hubs),
+if you need to reset a hub you should specify the vendor and product ID as
+above.
+
 https://github.com/ralight/usb-reset
 
