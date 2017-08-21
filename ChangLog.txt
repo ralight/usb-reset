@@ -1,0 +1,5 @@
+0.2 - 2017-08-21
+================
+
+- Add "-a" option for reseting all USB devices in a single command. Does not
+  reset hubs.

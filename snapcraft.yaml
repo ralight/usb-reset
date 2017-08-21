@@ -1,5 +1,5 @@
 name: usb-reset
-version: '0.1'
+version: '0.2'
 summary: Reset a USB device using vendor and product ID.
 description: This tool allows you to perform a bus reset on a USB device
     connected to your system. If the device has got confused, this may sort it
