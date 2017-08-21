@@ -1,2 +1,6 @@
+prime/
+snap/
+stage/
+*.snap
 *.o
 usb-reset
