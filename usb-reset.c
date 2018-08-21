@@ -78,6 +78,17 @@ int hex_char_to_int(char c)
 }
 
 
+void print_open_warning(int vid, int pid)
+{
+	printf("Unable to open device %04x:%04x, are you root?\n", vid, pid);
+
+	const char *snap = getenv("SNAP_NAME");
+	if(snap){
+		printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
+	}
+}
+
+
 int str_to_vid_pid(char *vid_pid, int *vid, int *pid)
 {
 	int i;
@@ -126,13 +137,7 @@ int reset_by_vid_pid(int vid, int pid)
 
 	handle = libusb_open_device_with_vid_pid(NULL, vid, pid);
 	if(!handle){
-		printf("Unable to open device %04x:%04x, are you root?\n", vid, pid);
-
-		const char *snap = getenv("SNAP_NAME");
-		if(snap){
-			printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
-		}
-
+		print_open_warning(vid, pid);
 		return 1;
 	}
 
@@ -171,13 +176,7 @@ int reset_all(void)
 
 		error = libusb_open(devices[i], &handle);
 		if(error){
-			printf("Unable to open device %04x:%04x, are you root?\n", desc.idVendor, desc.idProduct);
-
-			const char *snap = getenv("SNAP_NAME");
-			if(snap){
-				printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
-			}
-
+			print_open_warning(desc.idVendor, desc.idProduct);
 			return 1;
 		}
 
