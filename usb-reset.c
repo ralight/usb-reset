@@ -26,6 +26,9 @@ SOFTWARE.
 #include <stdlib.h>
 #include <string.h>
 
+#define RESET_ALL 1
+#define RESET_DEVICE 3
+
 void print_usage(void)
 {
 	printf("usb-reset %s: perform a bus reset on a USB device.\n\n", VERSION);
@@ -195,8 +198,18 @@ int main(int argc, char *argv[])
 {
 	int vid, pid;
 	int rc;
+	int op = -1;
 
-	if(argc != 2){
+	if(argc == 2){
+		if(!strcmp(argv[1], "-a")){
+			op = RESET_ALL;
+		}else{
+			if(str_to_vid_pid(argv[1], &vid, &pid)){
+				return 1;
+			}
+			op = RESET_DEVICE;
+		}
+	}else{
 		print_usage();
 		return 1;
 	}
@@ -206,14 +219,13 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(!strcmp(argv[1], "-a")){
-		rc = reset_all();
-	}else{
-		if(str_to_vid_pid(argv[1], &vid, &pid)){
-			return 1;
-		}
-
-		rc = reset_by_vid_pid(vid, pid);
+	switch(op){
+		case RESET_ALL:
+			rc = reset_all();
+			break;
+		case RESET_DEVICE:
+			rc = reset_by_vid_pid(vid, pid);
+			break;
 	}
 
 	libusb_exit(NULL);
