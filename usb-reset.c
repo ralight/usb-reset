@@ -203,15 +203,65 @@ int reset_by_vid_pid(int vid, int pid)
 }
 
 
-int reset_class(int device_class)
+int reset_single_device(struct libusb_device_descriptor *desc, libusb_device *device)
 {
 	struct libusb_device_handle *handle;
-	libusb_device **devices;
-	ssize_t device_count;
 	int error;
 	int rc = 0;
-	struct libusb_device_descriptor desc;
 	unsigned char buf[100];
+
+	error = libusb_open(device, &handle);
+	if(error){
+		print_open_warning(desc->idVendor, desc->idProduct);
+		return 1;
+	}
+
+	if(libusb_get_string_descriptor_ascii(handle, desc->iProduct, buf, 100) > 0){
+		printf("Trying to reset %s\n", buf);
+	}
+
+	if(libusb_reset_device(handle)){
+		printf("Reset failed, you may need to replug the device %04x:%04x.\n", desc->idVendor, desc->idProduct);
+		rc = 1;
+	}
+	libusb_close(handle);
+
+	return rc;
+}
+
+
+int reset_per_interface_device(struct libusb_device_descriptor *desc, libusb_device *device, int device_class)
+{
+	struct libusb_config_descriptor *config;
+	int rc;
+
+	for(int c=0; c<desc->bNumConfigurations; c++){
+		if(libusb_get_config_descriptor(device, c, &config)){
+
+			for(int i=0; i<config->bNumInterfaces; i++){
+
+				for(int a=0; a<config->interface[i].num_altsetting; a++){
+					if(config->interface[i].altsetting[a].bInterfaceClass == device_class){
+						rc = reset_single_device(desc, device);
+						libusb_free_config_descriptor(config);
+						return rc;
+					}
+				}
+			}
+			libusb_free_config_descriptor(config);
+		}
+	}
+
+	return 1;
+}
+
+
+int reset_class(int device_class)
+{
+	libusb_device **devices;
+	ssize_t device_count;
+	int rc = 0;
+	struct libusb_device_descriptor desc;
 
 	device_count = libusb_get_device_list(NULL, &devices);
 
@@ -224,25 +274,10 @@ int reset_class(int device_class)
 	for(int i=0; i<device_count; i++){
 		libusb_get_device_descriptor(devices[i], &desc);
 
-		if(desc.bDeviceClass != device_class){
-			continue;
+		if(desc.bDeviceClass == device_class){
+			reset_single_device(&desc, devices[i]);
+		}else if(desc.bDeviceClass == LIBUSB_CLASS_PER_INTERFACE){
 		}
-
-		error = libusb_open(devices[i], &handle);
-		if(error){
-			print_open_warning(desc.idVendor, desc.idProduct);
-			return 1;
-		}
-
-		if(libusb_get_string_descriptor_ascii(handle, desc.iProduct, buf, 100) > 0){
-			printf("Trying to reset %s\n", buf);
-		}
-
-		if(libusb_reset_device(handle)){
-			printf("Reset failed, you may need to replug the device %04x:%04x.\n", desc.idVendor, desc.idProduct);
-			rc = 1;
-		}
-		libusb_close(handle);
 	}
 
 	libusb_free_device_list(devices, 1);
@@ -295,7 +330,7 @@ int reset_all(void)
 int main(int argc, char *argv[])
 {
 	int vid, pid, device_class;
-	int rc;
+	int rc = 0;
 	int op = -1;
 
 	if(argc == 2){

@@ -4,7 +4,7 @@ VERSION=0.2
 
 CC=gcc
 NAME=usb-reset
-CFLAGS=-Wall -ggdb -I/usr/include/libusb-1.0 -DVERSION="\"${VERSION}\""
+CFLAGS=-Wall -O2 -ggdb -I/usr/include/libusb-1.0 -DVERSION="\"${VERSION}\""
 LDFLAGS=-lusb-1.0
 INSTALL=install
 prefix=/usr/local
