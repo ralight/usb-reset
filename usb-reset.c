@@ -27,6 +27,7 @@ SOFTWARE.
 #include <string.h>
 
 #define RESET_ALL 1
+#define RESET_CLASS 2
 #define RESET_DEVICE 3
 
 void print_usage(void)
@@ -34,6 +35,12 @@ void print_usage(void)
 	printf("usb-reset %s: perform a bus reset on a USB device.\n\n", VERSION);
 	printf("Reset a single device:\n");
 	printf("       usb-reset vendor_id:product_id\n\n");
+	printf("Reset all devices of a particular type:\n");
+	printf("       usb-reset -c <class>\n");
+	printf("Classes: audio comm hid physical printer image\n");
+	printf("         mass-storage hub data smart-card content-security\n");
+	printf("         video personal-healthcare diagnostic-device\n");
+	printf("         wireless application vendor-specific\n\n");
 	printf("Reset all devices apart from hubs:\n");
 	printf("       usb-reset -a\n\n");
 	printf("Example: usb-reset 0245:7276\n\n");
@@ -130,6 +137,50 @@ int str_to_vid_pid(char *vid_pid, int *vid, int *pid)
 }
 
 
+int str_to_class(const char *str, int *device_class)
+{
+	if(!strcasecmp(str, "audio")){
+		*device_class = LIBUSB_CLASS_AUDIO;
+	}else if(!strcasecmp(str, "comm")){
+		*device_class = LIBUSB_CLASS_COMM;
+	}else if(!strcasecmp(str, "hid")){
+		*device_class = LIBUSB_CLASS_HID;
+	}else if(!strcasecmp(str, "physical")){
+		*device_class = LIBUSB_CLASS_PHYSICAL;
+	}else if(!strcasecmp(str, "printer")){
+		*device_class = LIBUSB_CLASS_PRINTER;
+	}else if(!strcasecmp(str, "image")){
+		*device_class = LIBUSB_CLASS_IMAGE;
+	}else if(!strcasecmp(str, "mass-storage")){
+		*device_class = LIBUSB_CLASS_MASS_STORAGE;
+	}else if(!strcasecmp(str, "hub")){
+		*device_class = LIBUSB_CLASS_HUB;
+	}else if(!strcasecmp(str, "data")){
+		*device_class = LIBUSB_CLASS_DATA;
+	}else if(!strcasecmp(str, "smart-card")){
+		*device_class = LIBUSB_CLASS_SMART_CARD;
+	}else if(!strcasecmp(str, "content-security")){
+		*device_class = LIBUSB_CLASS_CONTENT_SECURITY;
+	}else if(!strcasecmp(str, "video")){
+		*device_class = LIBUSB_CLASS_VIDEO;
+	}else if(!strcasecmp(str, "personal-healthcare")){
+		*device_class = LIBUSB_CLASS_PERSONAL_HEALTHCARE;
+	}else if(!strcasecmp(str, "diagnostic-device")){
+		*device_class = LIBUSB_CLASS_MASS_STORAGE;
+	}else if(!strcasecmp(str, "wireless")){
+		*device_class = LIBUSB_CLASS_WIRELESS;
+	}else if(!strcasecmp(str, "application")){
+		*device_class = LIBUSB_CLASS_APPLICATION;
+	}else if(!strcasecmp(str, "vendor-specific")){
+		*device_class = LIBUSB_CLASS_VENDOR_SPEC;
+	}else{
+		return 1;
+	}
+
+	return 0;
+}
+
+
 int reset_by_vid_pid(int vid, int pid)
 {
 	int rc = 0;
@@ -147,6 +198,54 @@ int reset_by_vid_pid(int vid, int pid)
 	}
 
 	libusb_close(handle);
+
+	return rc;
+}
+
+
+int reset_class(int device_class)
+{
+	struct libusb_device_handle *handle;
+	libusb_device **devices;
+	ssize_t device_count;
+	int error;
+	int rc = 0;
+	struct libusb_device_descriptor desc;
+	unsigned char buf[100];
+
+	device_count = libusb_get_device_list(NULL, &devices);
+
+	if(device_count < 0){
+		return 1;
+	}
+
+	// FIXME - per interface reset
+
+	for(int i=0; i<device_count; i++){
+		libusb_get_device_descriptor(devices[i], &desc);
+
+		if(desc.bDeviceClass != device_class){
+			continue;
+		}
+
+		error = libusb_open(devices[i], &handle);
+		if(error){
+			print_open_warning(desc.idVendor, desc.idProduct);
+			return 1;
+		}
+
+		if(libusb_get_string_descriptor_ascii(handle, desc.iProduct, buf, 100) > 0){
+			printf("Trying to reset %s\n", buf);
+		}
+
+		if(libusb_reset_device(handle)){
+			printf("Reset failed, you may need to replug the device %04x:%04x.\n", desc.idVendor, desc.idProduct);
+			rc = 1;
+		}
+		libusb_close(handle);
+	}
+
+	libusb_free_device_list(devices, 1);
 
 	return rc;
 }
@@ -195,7 +294,7 @@ int reset_all(void)
 
 int main(int argc, char *argv[])
 {
-	int vid, pid;
+	int vid, pid, device_class;
 	int rc;
 	int op = -1;
 
@@ -207,6 +306,14 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			op = RESET_DEVICE;
+		}
+	}else if(argc == 3){
+		if(!strcmp(argv[1], "-c")){
+			if(str_to_class(argv[2], &device_class)){
+				fprintf(stderr, "Error: Unknown device class '%s'\n.", argv[2]);
+				return 1;
+			}
+			op = RESET_CLASS;
 		}
 	}else{
 		print_usage();
@@ -221,6 +328,9 @@ int main(int argc, char *argv[])
 	switch(op){
 		case RESET_ALL:
 			rc = reset_all();
+			break;
+		case RESET_CLASS:
+			rc = reset_class(device_class);
 			break;
 		case RESET_DEVICE:
 			rc = reset_by_vid_pid(vid, pid);
