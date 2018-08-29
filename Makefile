@@ -1,6 +1,6 @@
 .PHONY: all memtest clean install
 
-VERSION=0.2
+VERSION=0.3
 
 CC=gcc
 NAME=usb-reset

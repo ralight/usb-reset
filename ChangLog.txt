@@ -1,3 +1,9 @@
+0.3 - 2018-0x-xx
+================
+
+- Add "-c" option for reseting all USB devices of a particular device class.
+
+
 0.2 - 2017-08-21
 ================
 
