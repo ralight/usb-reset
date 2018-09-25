@@ -355,7 +355,9 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	if(libusb_init(NULL)){
+	rc = libusb_init(NULL);
+	if(rc){
+		printf("%s\n", libusb_strerror(rc));
 		printf("Unable to initialise libusb, exiting.\n");
 		return 1;
 	}
