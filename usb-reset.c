@@ -85,13 +85,32 @@ int hex_char_to_int(char c)
 }
 
 
+void print_snap_warning(void)
+{
+	const char *snap = getenv("SNAP_NAME");
+	if(snap){
+		printf("usb-reset is installed as a snap. To allow it to observe hardware you may need to run:\n");
+		printf("\tsudo snap connect usb-reset:hardware-observe core:hardware-observe\n");
+		printf("\tsudo snap connect usb-reset:raw-usb core:raw-usb\n");
+	}
+}
+
+
 void print_open_warning(int vid, int pid)
 {
 	printf("Unable to open device %04x:%04x, are you root?\n", vid, pid);
 
-	const char *snap = getenv("SNAP_NAME");
-	if(snap){
-		printf("usb-reset is installed as a snap. To allow it access to the usb bus you may need to run: \"sudo snap connect usb-reset:raw-usb core:raw-usb\"\n");
+	print_snap_warning();
+}
+
+
+void print_init_warning(int rc)
+{
+	printf("Unable to initialise libusb, exiting.\n");
+	if(rc == LIBUSB_ERROR_OTHER){
+		print_snap_warning();
+	}else{
+		printf("libusb error: %s\n", libusb_strerror(rc));
 	}
 }
 
@@ -357,8 +376,7 @@ int main(int argc, char *argv[])
 
 	rc = libusb_init(NULL);
 	if(rc){
-		printf("%s\n", libusb_strerror(rc));
-		printf("Unable to initialise libusb, exiting.\n");
+		print_init_warning(rc);
 		return 1;
 	}
 
