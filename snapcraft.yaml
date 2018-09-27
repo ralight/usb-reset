@@ -4,14 +4,15 @@ summary: Reset a USB device using vendor and product ID.
 description: This tool allows you to perform a bus reset on a USB device
     connected to your system. If the device has got confused, this may sort it
     out.
-    You will need to use "sudo snap connect usb-reset:raw-usb core:raw-usb" to
+    You will need to use "sudo snap connect usb-reset:raw-usb core:raw-usb" and
+    "sudo snap connect usb-reset:hardware-observe core:hardware-observe" to
     give this snap access to USB devices.
 confinement: strict
 
 apps:
   usb-reset:
     command: usr/local/bin/usb-reset
-    plugs: [network, raw-usb]
+    plugs: [hardware-observe, raw-usb]
 
 parts:
   usb-reset:
@@ -20,6 +21,7 @@ parts:
     source-type: git
 
     build-packages:
+      - gcc
       - libusb-1.0-0-dev
 
     stage-packages:
