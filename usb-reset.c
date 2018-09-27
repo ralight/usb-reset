@@ -89,7 +89,7 @@ void print_snap_warning(void)
 {
 	const char *snap = getenv("SNAP_NAME");
 	if(snap){
-		printf("usb-reset is installed as a snap. To allow it to observe hardware you may need to run:\n");
+		printf("usb-reset is installed as a snap. To allow it to function correctly you may need to run:\n");
 		printf("\tsudo snap connect usb-reset:hardware-observe core:hardware-observe\n");
 		printf("\tsudo snap connect usb-reset:raw-usb core:raw-usb\n");
 	}
