@@ -37,8 +37,7 @@ On systems where snaps are supported, usb-reset can be installed from the
 Ubuntu Store. On Ubuntu 15.10 and earlier, or on other systems, you may need to
 install snapd first.
 
-The store page is: https://uappexplorer.com/snap/ubuntu/usb-reset
-
+[![Get it from the Snap Store](https://snapcraft.io/static/images/badges/en/snap-store-white.svg)](https://snapcraft.io/usb-reset)
 
 History
 =======
