@@ -31,8 +31,11 @@ The latest source can be found at:
 https://github.com/ralight/usb-reset
 
 It only depends on libusb 1.0 and should compile anywhere libusb is supported.
+
 -- For instance, on Ubuntu install libusb with: 'sudo apt-get install libusb-1.0-0'
+
 -- Compile with: 'gcc usb-reset.c -lusb-1.0 -o usb-reset'
+
 -- Copy the binary to your local executable path: 'sudo cp usb-reset /usr/local/bin'
 
 
