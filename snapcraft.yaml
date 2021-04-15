@@ -8,6 +8,8 @@ description: This tool allows you to perform a bus reset on a USB device
     "sudo snap connect usb-reset:hardware-observe core:hardware-observe" to
     give this snap access to USB devices.
 confinement: strict
+grade: stable
+base: core20
 
 apps:
   usb-reset:
