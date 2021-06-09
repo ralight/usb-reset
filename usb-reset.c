@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-#include <libusb.h>
+#include <libusb-1.0/libusb.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -32,7 +32,7 @@ SOFTWARE.
 
 void print_usage(void)
 {
-	printf("usb-reset %s: perform a bus reset on a USB device.\n\n", VERSION);
+	printf("usb-reset %s: perform a bus reset on a USB device.\n\n", __VERSION__);
 	printf("Reset a single device:\n");
 	printf("       usb-reset vendor_id:product_id\n\n");
 	printf("Reset all devices of a particular type:\n");
